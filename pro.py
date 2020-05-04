@@ -4,13 +4,37 @@ import re
 from datetime import datetime
 import time
 
-def get_html(link):
-	response = requests.get(link)
+def get_html(url):
+	response = requests.get(url)
 	soup = BeautifulSoup(response.text, "html.parser")
 	return soup
 
+def clear_text(soup, text):
+	array = []
+	text = soup.find(text=text)
+	if text is not None:
+		for i in text.findNext().find_all("li"):
+			array.append(i.get_text())
+	else: array = "Не указано требований"
+	
+	return array
+
+def function_requirements(url):
+	soup = get_html(url)
+
+	education_title = "Требования к образованию и обучению"
+	experience_title = "Требования к опыту практической работы"
+
+	array_requirements = {
+	education_title: clear_text(soup, education_title),
+	experience_title: clear_text(soup, experience_title)
+	}
+
+	return array_requirements 
+
 def get_url_function(url):
 	subfunction_information, standard_information = [], []
+	item = 0
 
 	soup = get_html(url["url_standard"])
 	general_information = soup.find(class_="description")
@@ -18,15 +42,20 @@ def get_url_function(url):
 	for i in soup.find_all("tr"):
 		if i.find("td"):
 			if i.find("table"):
-				subfunction_information.clear()
 				labor_function = i.find("a")
+				subfunction_quantity = len(i.findAll("a")) - 1
+				function_requirement = function_requirements("https://ppt.ru" + labor_function.get('href'))
+				subfunction_information = []
 			else:
+				item += 1
 				labor_subfunction = i.find("a")
 				subfunction_information.append({'name_labor_subfunction': labor_subfunction.get_text(), 'url_subfunction': labor_subfunction.get('href')})
-				if subfunction_information:
-					standard_information.append({'specialty': general_information, 'labor_function':{'name_labor_function': labor_function.get_text(), 'url_labor_function': labor_function.get('href'), 'labor_subfunction': subfunction_information}})
-			
-	return standard_information
+				if subfunction_quantity == item:
+					standard_information.append({'name_labor_function': labor_function.get_text(), 'function_requirements': function_requirement, 'labor_subfunction': subfunction_information})
+					del subfunction_information
+					item = 0
+
+	return general_information.get_text(), standard_information
 
 def specialty_in_standard(url, specialty):
 	not_empty = 0 
@@ -82,8 +111,8 @@ def main():
 	array_standard = prof_standard(url_standard, specialty)
 
 	for i in array_standard:
-		standard_information = get_url_function(i)
-		print(standard_information)
+		general_information, standard_information = get_url_function(i)
+		print(general_information)
 		print("==================================")
 
 	print("PROGRAM TIME: ", datetime.now() - start_time)
