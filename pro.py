@@ -3,6 +3,7 @@ import requests
 import re
 from datetime import datetime
 import time
+import json
 
 def get_html(url):
 	response = requests.get(url)
@@ -102,6 +103,10 @@ def prof_standard(url, specialty):
 
 	return array_specialty_standard
 
+def write_to_json(data):
+	with open("data_file.json", "w", encoding="utf-8") as write_file:
+		json.dump(data, write_file, ensure_ascii=False, sort_keys=True, indent=2)
+
 def main():
 	start_time = datetime.now()
 
@@ -110,10 +115,20 @@ def main():
 
 	array_standard = prof_standard(url_standard, specialty)
 
+	data = {}
+	k = 0
 	for i in array_standard:
 		general_information, standard_information = get_url_function(i)
-		print(general_information)
-		print("==================================")
+		if data == {}:
+			data = { k:{
+			"name_standard": i["name_standard"],
+			"description": {"type_of_professional_activity": general_information, "labor_function": standard_information}
+			}}
+		else: 
+			data[k] = {"name_standard": i["name_standard"],"description": {"type_of_professional_activity": general_information, "labor_function": standard_information}}
+		k += 1
+
+	write_to_json(data)
 
 	print("PROGRAM TIME: ", datetime.now() - start_time)
 
