@@ -10,6 +10,20 @@ def get_html(url):
 	soup = BeautifulSoup(response.text, "html.parser")
 	return soup
 
+def labor_subfunction_competencies(url):
+	soup = get_html('https://ppt.ru' + url)
+
+	array_competencies = {}
+
+	for i in soup.find_all('tr'):
+		line_name = i.find('td')
+		line_name = line_name.get_text()
+
+		competencies = clear_text(soup, line_name)
+		array_competencies[line_name] = competencies
+
+	return array_competencies
+
 def clear_text(soup, text):
 	array = []
 	text = soup.find(text=text)
@@ -50,7 +64,8 @@ def get_url_function(url):
 			else:
 				item += 1
 				labor_subfunction = i.find("a")
-				subfunction_information.append({'name_labor_subfunction': labor_subfunction.get_text(), 'url_subfunction': labor_subfunction.get('href')})
+				subfunction_competencies = labor_subfunction_competencies(labor_subfunction.get('href'))
+				subfunction_information.append({'name_labor_subfunction': labor_subfunction.get_text(), 'labor_subfunction': subfunction_competencies})
 				if subfunction_quantity == item:
 					standard_information.append({'name_labor_function': labor_function.get_text(), 'function_requirements': function_requirement, 'labor_subfunction': subfunction_information})
 					del subfunction_information
@@ -105,7 +120,7 @@ def prof_standard(url, specialty):
 
 def write_to_json(data):
 	with open("data_file.json", "w", encoding="utf-8") as write_file:
-		json.dump(data, write_file, ensure_ascii=False, sort_keys=True, indent=2)
+		json.dump(data, write_file, ensure_ascii=False, sort_keys=True, indent=4)
 
 def main():
 	start_time = datetime.now()
@@ -119,13 +134,13 @@ def main():
 	k = 0
 	for i in array_standard:
 		general_information, standard_information = get_url_function(i)
-		if data == {}:
-			data = { k:{
-			"name_standard": i["name_standard"],
-			"description": {"type_of_professional_activity": general_information, "labor_function": standard_information}
-			}}
-		else: 
-			data[k] = {"name_standard": i["name_standard"],"description": {"type_of_professional_activity": general_information, "labor_function": standard_information}}
+		# if data == {}:
+		# 	data = { k:{
+		# 	"name_standard": i["name_standard"],
+		# 	"description": {"type_of_professional_activity": general_information, "labor_function": standard_information}
+		# 	}}
+		# else: 
+		data[k] = {"name_standard": i["name_standard"],"description": {"type_of_professional_activity": general_information, "labor_function": standard_information}}
 		k += 1
 
 	write_to_json(data)
