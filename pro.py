@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 import time
 import json
+import memory_profiler
 
 def get_html(url):
 	response = requests.get(url)
@@ -51,7 +52,7 @@ def get_url_function(url):
 	subfunction_information, standard_information = [], []
 	item = 0
 
-	soup = get_html(url["url_standard"])
+	soup = get_html(url)
 	general_information = soup.find(class_="description")
 
 	for i in soup.find_all("tr"):
@@ -73,20 +74,33 @@ def get_url_function(url):
 
 	return general_information.get_text(), standard_information
 
+def specialty_in_labor_function(url, specialty):
+	empty = 0 
+	soup = get_html(url)
+	for i in soup.find_all("div", class_="prof-item"):
+		text = re.sub('[%s]' % re.escape('-'), ' ', i.get_text())
+		# result2 = re.findall(specialty.lower(), text.lower())
+		if re.findall(specialty.lower(), text.lower()):
+			empty = 1
+			break
+		else: 
+			empty = 0
+	return empty
+
 def specialty_in_standard(url, specialty):
-	not_empty = 0 
+	empty = 0 
 	soup = get_html(url)
 
 	for i in soup.find_all("div", class_="name"):
 		pattern = re.compile(specialty)
 		result2 = pattern.findall(i.get_text())
-		if not result2:
-			not_empty = 0
-		else: 
-			not_empty = soup
+		if result2:
+			empty = 1
 			break
+		else: 
+			empty = 0
 
-	return not_empty
+	return empty
 
 def next_page(url):
 	array_profstandarts_page = []
@@ -103,7 +117,7 @@ def next_page(url):
 	return array_profstandarts_page
 
 def prof_standard(url, specialty):
-	array_specialty_standard = []
+	array_specialty_standard, array_found_standard = [], []
 	array_profstandarts_page = next_page(url)
 
 	for x in array_profstandarts_page:
@@ -116,12 +130,25 @@ def prof_standard(url, specialty):
 				if found_standard != 0:
 					array_specialty_standard.append({'name_standard': i.get_text(), 'url_standard': url})
 
-	return array_specialty_standard
+	for item in array_specialty_standard:
+		soup = soup = get_html(item["url_standard"])
+		found_standard = []
+		for i in soup.find_all("tr"):
+			if i.find("td"):
+				if i.find("table"):
+					labor_function = i.find("a")
+					found_standard = specialty_in_labor_function("https://ppt.ru" + labor_function.get('href'), specialty)
+					if found_standard != 0:
+						array_found_standard.append({'name_standard': item["name_standard"], 'url_standard': item["url_standard"]})
+						break
+
+	return array_found_standard
 
 def write_to_json(data):
 	with open("data_file.json", "w", encoding="utf-8") as write_file:
 		json.dump(data, write_file, ensure_ascii=False, sort_keys=True, indent=4)
 
+# @profile
 def main():
 	start_time = datetime.now()
 
@@ -129,17 +156,11 @@ def main():
 	url_standard = "https://ppt.ru/docs/profstandarts"
 
 	array_standard = prof_standard(url_standard, specialty)
-
+	print(array_standard)
 	data = {}
 	k = 0
 	for i in array_standard:
-		general_information, standard_information = get_url_function(i)
-		# if data == {}:
-		# 	data = { k:{
-		# 	"name_standard": i["name_standard"],
-		# 	"description": {"type_of_professional_activity": general_information, "labor_function": standard_information}
-		# 	}}
-		# else: 
+		general_information, standard_information = get_url_function(i["url_standard"])
 		data[k] = {"name_standard": i["name_standard"],"description": {"type_of_professional_activity": general_information, "labor_function": standard_information}}
 		k += 1
 
