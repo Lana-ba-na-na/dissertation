@@ -85,7 +85,6 @@ def specialty_in_labor_function(url, specialty):
 	soup = get_html(url)
 	for i in soup.find_all("div", class_="prof-item"):
 		text = re.sub('[%s]' % re.escape('-'), ' ', i.get_text())
-		# result2 = re.findall(specialty.lower(), text.lower())
 		if re.findall(specialty.lower(), text.lower()):
 			empty = 1
 			break
@@ -124,9 +123,11 @@ def next_page(url):
 
 def prof_standard(url, specialty):
 	array_specialty_standard, array_found_standard = [], []
-	array_profstandarts_page = next_page(url)
+	# array_profstandarts_page = next_page(url)
 	k = 0
+	array_profstandarts_page = ['profstandarts/page/1']
 	for x in array_profstandarts_page:
+		print(x)
 		soup = get_html("https://ppt.ru/docs/"+ x)
 
 		for i in soup.find_all("a"):
@@ -137,11 +138,11 @@ def prof_standard(url, specialty):
 				found_standard = specialty_in_standard(url, specialty)
 
 				if found_standard != 0:
-					array_specialty_standard.append({'name_standard': i.get_text(), 'url_standard': url})
+					array_specialty_standard.append({'name_standard': i.get_text(), 'url_standard': url })
 
 	for item in array_specialty_standard:
 		soup = get_html(item["url_standard"])
-		found_standard = []
+		found_standard = ''
 		general_information = soup.find(class_="description")
 
 		for i in soup.find_all("tr"):
@@ -149,7 +150,7 @@ def prof_standard(url, specialty):
 				if i.find("table"):
 					labor_function = i.find("a")
 					found_standard = specialty_in_labor_function("https://ppt.ru" + labor_function.get('href'), specialty)
-					if found_standard != 0:
+					if found_standard:
 						array_found_standard.append({'name_standard': item["name_standard"], 'url_standard': item["url_standard"], 'general_information': general_information.get_text()})
 						database.insert_prof_standard(item["name_standard"], item["url_standard"], general_information.get_text())
 						break
@@ -168,7 +169,7 @@ def main():
 	url_standard = "https://ppt.ru/docs/profstandarts"
 
 	array_standard = prof_standard(url_standard, specialty)
-
+	print(array_standard)
 	data = {}
 	k = 0
 	for i in array_standard:
@@ -176,9 +177,9 @@ def main():
 		url_standard = i["url_standard"]
 		id_standard = database.found_id_standard(url_standard)
 		standard_information = get_url_function(url_standard, id_standard[0])
-		data[k] = {"name_standard": i["name_standard"],"description": {"type_of_professional_activity": general_information, "labor_function": standard_information}}
+		data[k] = {"name_standard": i["name_standard"],"description": {"type_of_professional_activity": i["general_information"], "labor_function": standard_information}}
 
-	write_to_json(data)
+	# write_to_json(data)
 
 	print("PROGRAM TIME: ", datetime.now() - start_time)
 
