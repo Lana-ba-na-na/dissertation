@@ -10,6 +10,41 @@ def database_connection(connectvars):
 
 	return conn
 
+def found_fses():
+	con = database_connection(connectvars.connection())
+	cur = con.cursor()
+	try:
+		cur.execute('SELECT id, url FROM fses')
+		results = cur.fetchall()
+	except:
+		print ("Error: unable to fetch data")
+
+	con.close()
+	return results
+
+def insert_fses(name_standard, id_fses):
+	con = database_connection(connectvars.connection())
+	cur = con.cursor()
+	try:
+		cur.execute('INSERT standard_direction(id_fses, standard) VALUES ("%d", "%s")' % (id_fses, name_standard))
+		con.commit()
+	except:
+		con.rollback()
+
+	con.close()
+
+def found_standard():
+	con = database_connection(connectvars.connection())
+	cur = con.cursor()
+	try:
+		cur.execute('SELECT DISTINCT standard FROM standard_direction')
+		results = cur.fetchall()
+	except:
+		print ("Error: unable to fetch data")
+
+	con.close()
+	return results
+
 def insert_prof_standard(name_standard, url_standard, general_information):
 	con = database_connection(connectvars.connection())
 	cur = con.cursor()
