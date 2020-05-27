@@ -162,9 +162,9 @@ def main():
 	start_time = datetime.now()
 	print(start_time)
 
-	# for i in database.found_fses():
+	for i in database.found_fses():
 
-	# 	fses_of_hpe(i[0], i[1])
+		fses_of_hpe(i[0], i[1])
 
 	url = "https://ppt.ru/docs/profstandarts"
 

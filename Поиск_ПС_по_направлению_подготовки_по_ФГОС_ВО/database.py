@@ -130,3 +130,53 @@ def url_prof():
 
 	con.close()
 	return results
+
+
+def display(not_education, education, direction):
+	con = database_connection(connectvars.connection())
+	cur = con.cursor()
+	try:
+		cur.execute('SELECT standard, activity, lf.name, er.name \
+						FROM prof_standard as ps \
+						JOIN standard_direction as sd ON sd.standard = ps.name \
+						JOIN labor_function as lf ON ps.id = lf.id_prof_standard,  \
+						education_requirement as er, fses as f \
+						JOIN education as e ON e.id = f.id_education \
+						JOIN training_direction as td ON td.id = f.id_direction,  \
+						subfunctions as sub  \
+						JOIN labor_action as la ON sub.id = la.id_subfunctions \
+						JOIN necessary_knowledge as nk ON sub.id = nk.id_subfunctions \
+						JOIN necessary_skills as ns ON sub.id = ns.id_subfunctions \
+						WHERE sd.id_fses = f.id and sub.id_function = lf.id and er.id_function = lf.id  \
+						and er.name NOT LIKE "%/%s%" and e.name = "%s" and td.name = "%s" \
+						GROUP BY lf.name' % (not_education, education, direction))
+		results = cur.fetchall()
+	except:
+		print ("Error: unable to fetch data")
+
+	con.close()
+	return results
+
+def education():
+	con = database_connection(connectvars.connection())
+	cur = con.cursor()
+	try:
+		cur.execute('SELECT id, name FROM education')
+		results = cur.fetchall()
+	except:
+		print ("Error: unable to fetch data")
+
+	con.close()
+	return results
+
+def training_direction():
+	con = database_connection(connectvars.connection())
+	cur = con.cursor()
+	try:
+		cur.execute('SELECT id, name FROM training_direction')
+		results = cur.fetchall()
+	except:
+		print ("Error: unable to fetch data")
+
+	con.close()
+	return results

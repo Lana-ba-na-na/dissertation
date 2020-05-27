@@ -123,9 +123,8 @@ def next_page(url):
 
 def prof_standard(url, specialty):
 	array_specialty_standard, array_found_standard = [], []
-	# array_profstandarts_page = next_page(url)
+	array_profstandarts_page = next_page(url)
 	k = 0
-	array_profstandarts_page = ['profstandarts/page/1']
 	for x in array_profstandarts_page:
 		print(x)
 		soup = get_html("https://ppt.ru/docs/"+ x)
@@ -179,7 +178,7 @@ def main():
 		standard_information = get_url_function(url_standard, id_standard[0])
 		data[k] = {"name_standard": i["name_standard"],"description": {"type_of_professional_activity": i["general_information"], "labor_function": standard_information}}
 
-	# write_to_json(data)
+	write_to_json(data)
 
 	print("PROGRAM TIME: ", datetime.now() - start_time)
 
