@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>ЗУНы профстандартов</title>
+		<link rel="stylesheet" href="../static/style.css">
+		<script src="../static/js/jquery-3.1.1.min.js"></script>
+		<!-- <script src="../static/js/area_standard.js"></script> -->
+		<script>
+			$(function(){
+				$('#btnArea').click(function(){
+
+					alert("Это может занять некоторое время")
+					
+					// $.ajax({
+					// 	url: '/prof_standard',
+					// 	data: $('form').serialize(),
+					// 	type: 'POST',
+					// 	success: function(response){
+					// 		console.log(response);
+					// 	},
+					// 	error: function(error){
+					// 		console.log(error);
+					// 	}
+					// });
+				});
+			});
+		</script>
+	</head>
+	<body>
+		<header>
+				<h1 align="center">Сопоставление требования из профессиональных стандартов и вакансий</h1>
+		</header>
+		<div class="main">
+			<div class="decor">
+				<form  method="post" action="{{ url_for('prof_standard') }}">
+					<label for="prof_area" class="sr-only">Профессиональная область</label>
+					<select name="prof_area" id="prof_area" class="decor_select" required="required">
+						{% for row in results %}
+							<option value="{{ row['name_area'] }}">{{ row['name_area'] }}</option>
+						{% endfor %}
+					</select>
+					<br/>
+					<label for="prof_name" class="sr-only">Наименование профессии</label>
+					<input type="text" name="prof_name" id="prof_name" class="decor_input" required="required">
+					<br/>
+					<input  align="center" id="btnArea" type="submit" value="Найти">
+				</form>
+			</div>
+		</div>
+	</body>
+</html>

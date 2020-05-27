@@ -1,0 +1,77 @@
+body{
+  background-color: #e2e1dc;
+  margin: 0;
+}
+header{
+	background-color: #e2e1dc;
+	color: #23282d;
+	width: 98,5%;
+  padding: 6px 10px;
+}
+.main{
+  float: left;
+  margin-left: 250px;
+  width: 860px;
+  background-color: #e2e1dc;
+}
+
+.decor {
+	position: relative;
+	max-width: 800px;
+	margin: 50px auto 0;
+	border-radius: 30px;
+}
+.decor .sr-only{
+  /*padding-left: 15px;*/
+  font-family: 'Roboto', sans-serif;
+  color: #23282d;
+  font-size: 14px;
+  margin-right: 10px;
+}
+.decor_select{
+  width: 300px;
+  padding: 0 5px;
+  margin-bottom: 30px;
+  background: #E9EFF6;
+  line-height: 40px;
+  border-width: 0;
+  font-family: 'Roboto', sans-serif;
+}
+.decor_input{
+  width: 300px;
+  padding: 0 10px;
+  margin-bottom: 30px;
+  background: #E9EFF6;
+  line-height: 40px;
+  border-width: 0;
+  font-family: 'Roboto', sans-serif;
+}
+.decor input[type="submit"] {
+  background: grey;
+  line-height: 40px;
+  border-width: 0;
+  border-radius: 20px;
+  width: 500px;
+  padding: 0 20px;
+  color: white;
+  font-size: 15px;
+}
+
+table { 
+  border: 1px solid #69c;
+}
+th { 
+  font-weight: normal; 
+  color: #000000; 
+  padding: 10px; 
+  background:#00FA9A;
+}
+td { 
+  color: #000000; 
+  border-top: 1px dashed #fff; 
+  padding: 10px; 
+  background:#ccddff;
+}
+tr:hover td { 
+  background:#99bcff;
+} 
