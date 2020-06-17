@@ -4,8 +4,8 @@ import re
 from datetime import datetime
 import time
 import json
-import memory_profiler
-import database #модуль работы с БД
+import db_standard #модуль работы с БД стандартов
+import parser_language # модуль соотнесения языком программирования и видов деятельности
 
 def get_html(url): 
 	response = requests.get(url)
@@ -49,13 +49,13 @@ def get_url_function(url, id_standard):  # Функция извлечения �
 				labor_function = i.find("a")
 				function = 'labor_function'
 				text =''
-				database.insert_information(labor_function.get_text(), id_standard, function, text)
+				db_standard.insert_information(labor_function.get_text(), id_standard, function, text)
 				subfunction_quantity = len(i.findAll("a")) - 1
-				id_labor_function = database.found_id_information(labor_function.get_text(), id_standard, function)
+				id_labor_function = db_standard.found_id_information(labor_function.get_text(), id_standard, function)
 				function_requirement = function_requirements(labor_function.get('href'))
 				for key, value in function_requirement.items():
 					for text in value:
-						database.insert_information(text, id_labor_function[0], function, key)
+						db_standard.insert_information(text, id_labor_function[0], function, key)
 				subfunction_information = []
 			else:
 				item += 1
@@ -67,12 +67,12 @@ def get_url_function(url, id_standard):  # Функция извлечения �
 				if subfunction_quantity == item:
 					standard_information.append({'name_labor_function': labor_function.get_text(), 'function_requirements': function_requirement, 'labor_subfunction': subfunction_information})
 					for k in subfunction_information:
-						database.insert_information(k['name_labor_subfunction'], id_labor_function[0], function, text)
-						id_labor_subfunction = database.found_id_information(k['name_labor_subfunction'], id_labor_function[0], function)
+						db_standard.insert_information(k['name_labor_subfunction'], id_labor_function[0], function, text)
+						id_labor_subfunction = db_standard.found_id_information(k['name_labor_subfunction'], id_labor_function[0], function)
 						labor_subfunction = k['labor_subfunction']
 						for key, value in labor_subfunction.items():
 							for text in value:
-								database.insert_information(text, id_labor_subfunction[0], function, key)
+								db_standard.insert_information(text, id_labor_subfunction[0], function, key)
 					del subfunction_information
 					item = 0
 
@@ -123,7 +123,7 @@ def next_page(url): # Прохождение пагинации
 
 	return array_profstandarts_page
 
-def found_standard(specialty, param): # Функция находит ПС на сайте https://ppt.ru/docs/profstandarts
+def found_standard(specialty, param, id_area): # Функция находит ПС на сайте https://ppt.ru/docs/profstandarts
 	array_specialty_standard, array_found_standard = [], 0
 	url = "https://ppt.ru/docs/profstandarts"
 	array_profstandarts_page = next_page(url)
@@ -140,6 +140,7 @@ def found_standard(specialty, param): # Функция находит ПС на 
 		soup = get_html(url)
 		general_information = soup.find(class_="description")
 		found_standard = specialty_in_standard(url, specialty)
+
 		if found_standard != 0:
 			for i in soup.find_all("tr"):
 				if i.find("td"):
@@ -148,7 +149,7 @@ def found_standard(specialty, param): # Функция находит ПС на 
 						found_standard = specialty_in_labor_function("https://ppt.ru" + labor_function.get('href'), specialty)
 						if found_standard != 0:
 							array_found_standard = {'name_standard': item["name_standard"], 'url_standard': item["url_standard"], 'general_information': general_information.get_text()}
-							database.insert_prof_standard(item["name_standard"], item["url_standard"], general_information.get_text())
+							db_standard.insert_prof_standard(item["name_standard"], item["url_standard"], general_information.get_text(), id_area)
 						
 
 	return array_found_standard
@@ -168,7 +169,7 @@ def prof_area(): # Функция извлекает виды профессио
 		param = i.find("a")
 		if param is not None:
 			area.append({"name_area": param.get_text(), "url_area": param.get("href")})
-			database.insert_prof_area(param.get_text(), param.get("href"))
+			db_standard.insert_prof_area(param.get_text(), param.get("href"))
 
 	return area
 
@@ -183,28 +184,56 @@ def area_standard(url): # Функция извлечения наименова
 
 	return arr_standard
 
-# @profile
-def main(prof_area, specialty): # Основная функция программы
+def main(prof_area, specialty, education): # Основная функция программы
 	start_time = datetime.now()
 	print(start_time)
+
+	parser_language.language_extraction()
+	parser_language.read_tsv()
+
+	results = db_standard.correlation_skills_activity()
+	print(results)
+	for k in results:
+		db_standard.insert_correlation_skills_activity(k[0], k[1])
+
 	array_standard = []
 
-	url = database.found_area(prof_area)
-	url = 'https://classinform.ru/' + url[0]
+	url = db_standard.found_area(prof_area)
+	id_area = url[0]
+	url = 'https://classinform.ru/' + url[1]
 
 	for i in area_standard(url):
-		standard = found_standard(specialty, i)
+		standard = found_standard(specialty, i, id_area)
 		if standard != 0:
 			array_standard.append(standard)
 
-	# for j in array_standard:
-	# 	url_standard = j["url_standard"]
-	# 	id_standard = database.found_id_standard(url_standard)
-	# 	standard_information = get_url_function(url_standard, id_standard[0])
+	for j in array_standard:
+		url_standard = j["url_standard"]
+		id_standard = db_standard.found_id_standard(url_standard)
+		standard_information = get_url_function(url_standard, id_standard[0])
+
+	array_activity_skills = {}
+	data_skills, language = [], []
+	for j in db_standard.professional_activity():
+		array = []
+		data_skills = db_standard.display()
+		for i in data_skills:
+			if j[0] == i[1]:
+				array.append(i[2])
+		array_activity_skills[j[0]] = array
+	average = round(len(data_skills)/len(array_activity_skills))
+
+	for key, value in array_activity_skills.items():
+		if len(value) > average:
+			for k in value:
+				language.append(k)
 
 	print("PROGRAM TIME: ", datetime.now() - start_time)
 
-	return array_standard
+	return array_activity_skills
 
 # if __name__ == '__main__':
-# 	main()
+# 	prof_area = "Связь, информационные и коммуникационные технологии"
+# 	specialty = "Программист"
+# 	education = "бакалавриат"
+# 	main(prof_area, specialty, education)
